@@ -1,0 +1,123 @@
+project bootable/recovery/
+diff --git a/minui/events.c b/minui/events.c
+index a619df6..57aa4a9 100644
+--- a/minui/events.c
++++ b/minui/events.c
+@@ -70,11 +70,16 @@ int ev_init(ev_callback input_cb, void *data)
+ 
+             /* TODO: add ability to specify event masks. For now, just assume
+              * that only EV_KEY and EV_REL event types are ever needed. */
+
+-  if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_ABS, ev_bits)) {
+-  close(fd);
+-  continue;
+-  }
+
++
++ /*
++ * if (!test_bit(EV_KEY, ev_bits) && !test_bit(EV_REL, ev_bits) && !test_bit(EV_ABS, ev_bits)) {
++ * close(fd);
++ * continue;
++ * }
++ */
+ 
++ printf("Loading (%s)\n", de->d_name);
+             ev_fds[ev_count].fd = fd;
+             ev_fds[ev_count].events = POLLIN;
+             ev_fdinfo[ev_count].cb = input_cb;
+@@ -88,6 +93,7 @@ int ev_init(ev_callback input_cb, void *data)
+     return 0;
+ }
+ 
++
+ int ev_add_fd(int fd, ev_callback cb, void *data)
+ {
+     if (ev_misc_count == MAX_MISC_FDS || cb == NULL)
+
+
+project frameworks/native/
+diff --git a/libs/gui/BufferQueue.cpp b/libs/gui/BufferQueue.cpp
+old mode 100644
+new mode 100755
+index 590946a..f67e0ed
+--- a/libs/gui/BufferQueue.cpp
++++ b/libs/gui/BufferQueue.cpp
+@@ -281,6 +281,7 @@ status_t BufferQueue::dequeueBuffer(int *outBuf, sp<Fence>& outFence,
+         int found = -1;
+         int dequeuedCount = 0;
+         bool tryAgain = true;
++
+         while (tryAgain) {
+             if (mAbandoned) {
+                 ST_LOGE("dequeueBuffer: SurfaceTexture has been abandoned!");
+@@ -325,8 +326,9 @@ status_t BufferQueue::dequeueBuffer(int *outBuf, sp<Fence>& outFence,
+             // clients are not allowed to dequeue more than one buffer
+             // if they didn't set a buffer count.
+             if (!mOverrideMaxBufferCount && dequeuedCount) {
+- ST_LOGE("dequeueBuffer: can't dequeue multiple buffers without "
+- "setting the buffer count");
++ /*
++ * Flud log...
++ * ST_LOGE("dequeueBuffer: can't dequeue multiple buffers without "
++ * "setting the buffer count");
++ */
+                 return -EINVAL;
+             }
+
+project hardware/libhardware/
+diff --git a/Android.mk b/Android.mk
+old mode 100644
+new mode 100755
+index 7467bf2..700a85f
+--- a/Android.mk
++++ b/Android.mk
+@@ -10,7 +10,7 @@ LOCAL_SHARED_LIBRARIES := libcutils
+ 
+ LOCAL_INCLUDES += $(LOCAL_PATH)
+ 
+-LOCAL_CFLAGS += -DQEMU_HARDWARE
++LOCAL_CFLAGS += -DQEMU_HARDWARE -DDISABLE_HW_ID_MATCH_CHECK
+ QEMU_HARDWARE := true
+ 
+ LOCAL_SHARED_LIBRARIES += libdl
+
+project packages/apps/QuickSearchBox/
+diff --git a/Android.mk b/Android.mk
+old mode 100644
+new mode 100755
+index b05bb74..1d802b2
+--- a/Android.mk
++++ b/Android.mk
+@@ -36,7 +36,8 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+ 
+ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+ 
+-include $(BUILD_PACKAGE)
++# Search now in Google NOW :)
++# include $(BUILD_PACKAGE)
+ 
+ # Also build our test apk
+-include $(call all-makefiles-under,$(LOCAL_PATH))
++# include $(call all-makefiles-under,$(LOCAL_PATH))
+
+project system/vold/
+diff --git a/main.cpp b/main.cpp
+old mode 100644
+new mode 100755
+index afbfa41..2c9da13
+--- a/main.cpp
++++ b/main.cpp
+@@ -162,11 +162,11 @@ static int parse_mount_flags(char *mount_flags)
+ static int process_config(VolumeManager *vm) {
+     FILE *fp;
+     int n = 0;
+- char line[255];
++ char line[1024];
+     Volume *vol = 0;
+ 
+     if ((fp = fopen("/proc/cmdline", "r"))) {
+- while (fscanf(fp, "%s", line) > 0) {
++ while (fscanf(fp, "%1023s", line) > 0) {
+             if (!strncmp(line, "SDCARD=", 7)) {
+                 const char *sdcard = line + 7;
+                 if (*sdcard) {
