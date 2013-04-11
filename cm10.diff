@@ -114,10 +114,3 @@ index afbfa41..2c9da13
 - char line[255];
 + char line[1024];
      Volume *vol = 0;
- 
-     if ((fp = fopen("/proc/cmdline", "r"))) {
-- while (fscanf(fp, "%s", line) > 0) {
-+ while (fscanf(fp, "%1023s", line) > 0) {
-             if (!strncmp(line, "SDCARD=", 7)) {
-                 const char *sdcard = line + 7;
-                 if (*sdcard) {
